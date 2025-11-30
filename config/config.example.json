@@ -1,0 +1,33 @@
+{
+  "ownerUuid": "00000000-0000-0000-0000-000000000000",
+  "minecraft": {
+    "host": "0b0t.org",
+    "username": "YourUsername",
+    "auth": "microsoft",
+    "version": "1.20.4"
+  },
+  "flight": {
+    "speed": 0.265,
+    "maxSpeed": 2.65,
+    "velocityUpRate": 0.1,
+    "velocityDownRate": 0.01,
+    "verticalSpeed": 0.5,
+    "fallMultiplier": 0,
+    "tickRate": 50
+  },
+  "safety": {
+    "minHealth": 5,
+    "disconnectOnLowHealth": true,
+    "disconnectRadius": 500,
+    "disconnectOnArrival": true
+  },
+  "discord": {
+    "token": "DISCORD_BOT_TOKEN",
+    "channelId": "DISCORD_CHANNEL_ID",
+    "statusMessageId": null,
+    "updateInterval": 5000
+  },
+  "logging": {
+    "directory": "logs"
+  }
+}

@@ -1,0 +1,16 @@
+
+node_modules/
+
+logs/
+*.log
+npm-debug.log*
+
+config/config.json
+config/themes.json
+
+data/*.json
+data/v0.nav
+!data/README.md
+
+.DS_Store
+Thumbs.db

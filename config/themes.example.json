@@ -1,0 +1,73 @@
+{
+  "activeTheme": "prismatic",
+  "themes": {
+    "prismatic": {
+      "label": "Prismatic",
+      "description": "Animated gradient border with neon UI accents.",
+      "panels": {
+        "chat": {
+          "defaultColor": "#f6f9ff",
+          "bodyBg": "#101010",
+          "textColor": "#f2f2f2",
+          "titleSegments": [
+            { "text": "0b", "color": "#ff6b6b", "bold": true },
+            { "text": "0t", "color": "#61b0ff", "bold": true },
+            { "text": " Chat", "color": "#6bff9a", "bold": true }
+          ],
+          "subtitle": "(PgUp/PgDn, Arrows)"
+        },
+        "status": {
+          "title": "Flight Status",
+          "defaultColor": "#fefefe",
+          "bodyBg": "#0f0f12",
+          "textColor": "#e8f4ff"
+        },
+        "server": {
+          "title": "Server",
+          "defaultColor": "#fdf3ff",
+          "bodyBg": "#120f12",
+          "textColor": "#ffeefc"
+        },
+        "input": {
+          "title": "Input (.help for commands)",
+          "defaultColor": "#e4f4ff",
+          "bodyBg": "#0d1118",
+          "textColor": "#e0faff"
+        }
+      }
+    },
+    "midnight": {
+      "label": "Midnight Matrix",
+      "description": "Deep blues with lime text for low-light rooms.",
+      "panels": {
+        "chat": {
+          "defaultColor": "#d7ffef",
+          "bodyBg": "#020b16",
+          "textColor": "#9ee7c5",
+          "titleSegments": [
+            { "text": "Matrix Chat", "color": "#7cf4b4", "bold": true }
+          ],
+          "subtitle": "(Scroll, arrows, /say)"
+        },
+        "status": {
+          "title": "Vector Readouts",
+          "defaultColor": "#c8f1ff",
+          "bodyBg": "#031120",
+          "textColor": "#8aceff"
+        },
+        "server": {
+          "title": "Relay",
+          "defaultColor": "#f0f6ff",
+          "bodyBg": "#031a18",
+          "textColor": "#8debd2"
+        },
+        "input": {
+          "title": "Command Buffer",
+          "defaultColor": "#fff8d6",
+          "bodyBg": "#051524",
+          "textColor": "#fef5c3"
+        }
+      }
+    }
+  }
+}
