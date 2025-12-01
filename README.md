@@ -1,4 +1,4 @@
-# v0.nav
+![v0 logo](assets/thing.svg)
 
 v0.nav is a mineflayer-based automation toolkit for 0b0t.org. it ships with a rich terminal ui, shared command router, discord integration, elytra autopilot, tpa helper, and persistent access control.
 
