@@ -1,28 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7280 2047">
 
 <defs>
-  <filter id="whiteglow">
-    <feGaussianBlur stdDeviation="3" result="blur"/>
+  <filter id="whiteglow" x="-70%" y="-70%" width="240%" height="240%" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="blurBase">
+      <animate attributeName="stdDeviation" values="10;22;10" dur="1.8s" repeatCount="indefinite"/>
+    </feGaussianBlur>
+    <feColorMatrix in="blurBase" type="matrix"
+      values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0"
+      result="glowWhite"/>
+    <feGaussianBlur in="glowWhite" stdDeviation="4" result="softGlow"/>
     <feMerge>
-      <feMergeNode in="blur"/>
+      <feMergeNode in="softGlow"/>
       <feMergeNode in="SourceGraphic"/>
     </feMerge>
   </filter>
 
-  <filter id="huecycle">
-    <feColorMatrix type="hueRotate">
-      <animate attributeName="values"
-               from="0" to="360"
-               dur="4s"
-               repeatCount="indefinite"/>
-    </feColorMatrix>
-  </filter>
+  <linearGradient id="navRainbow" x1="2730" y1="0" x2="7280" y2="0" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+    <stop offset="0%" stop-color="#ffb3ff"/>
+    <stop offset="10%" stop-color="#e9aaff"/>
+    <stop offset="20%" stop-color="#c68cff"/>
+    <stop offset="30%" stop-color="#9c7fff"/>
+    <stop offset="40%" stop-color="#7fffff"/>
+    <stop offset="50%" stop-color="#75ffd9"/>
+    <stop offset="60%" stop-color="#a3ff7f"/>
+    <stop offset="70%" stop-color="#fff27f"/>
+    <stop offset="80%" stop-color="#ff9f5a"/>
+    <stop offset="90%" stop-color="#ff7fb3"/>
+    <stop offset="100%" stop-color="#ffb3ff"/>
+    <animateTransform attributeName="gradientTransform"
+                     type="translate"
+                     from="0 0"
+                     to="-4550 0"
+                     dur="4s"
+                     repeatCount="indefinite"
+                     additive="sum"
+                     accumulate="sum"/>
+  </linearGradient>
 </defs>
 
-<path d="M0,20 h10 v10 h-10 z M40,20 h10 v10 h-10 z M0,30 h10 v10 h-10 z M40,30 h10 v10 h-10 z M0,40 h10 v10 h-10 z M40,40 h10 v10 h-10 z M10,50 h10 v10 h-10 z M30,50 h10 v10 h-10 z M20,60 h10 v10 h-10 z" fill="black" filter="url(#whiteglow)"/>
-<path d="M66,0 h10 v10 h-10 z M76,0 h10 v10 h-10 z M86,0 h10 v10 h-10 z M56,10 h10 v10 h-10 z M96,10 h10 v10 h-10 z M56,20 h10 v10 h-10 z M86,20 h10 v10 h-10 z M96,20 h10 v10 h-10 z M56,30 h10 v10 h-10 z M76,30 h10 v10 h-10 z M96,30 h10 v10 h-10 z M56,40 h10 v10 h-10 z M66,40 h10 v10 h-10 z M96,40 h10 v10 h-10 z M56,50 h10 v10 h-10 z M96,50 h10 v10 h-10 z M66,60 h10 v10 h-10 z M76,60 h10 v10 h-10 z M86,60 h10 v10 h-10 z" fill="black" filter="url(#whiteglow)"/>
-<path d="M112,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
-<path d="M128,20 h10 v10 h-10 z M138,20 h10 v10 h-10 z M148,20 h10 v10 h-10 z M158,20 h10 v10 h-10 z M128,30 h10 v10 h-10 z M168,30 h10 v10 h-10 z M128,40 h10 v10 h-10 z M168,40 h10 v10 h-10 z M128,50 h10 v10 h-10 z M168,50 h10 v10 h-10 z M128,60 h10 v10 h-10 z M168,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
-<path d="M194,20 h10 v10 h-10 z M204,20 h10 v10 h-10 z M214,20 h10 v10 h-10 z M224,30 h10 v10 h-10 z M194,40 h10 v10 h-10 z M204,40 h10 v10 h-10 z M214,40 h10 v10 h-10 z M224,40 h10 v10 h-10 z M184,50 h10 v10 h-10 z M224,50 h10 v10 h-10 z M194,60 h10 v10 h-10 z M204,60 h10 v10 h-10 z M214,60 h10 v10 h-10 z M224,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
-<path d="M240,20 h10 v10 h-10 z M280,20 h10 v10 h-10 z M240,30 h10 v10 h-10 z M280,30 h10 v10 h-10 z M240,40 h10 v10 h-10 z M280,40 h10 v10 h-10 z M250,50 h10 v10 h-10 z M270,50 h10 v10 h-10 z M260,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
+<path d="M455 1592V1365H682V1592ZM227 1365V1137H455V1365ZM682 1365V1137H910V1365ZM0 1137V455H227V1137ZM910 1137V455H1137V1137Z" fill="#050505" filter="url(#whiteglow)"/>
+<path d="M1592 1592V1365H2275V1592ZM1820 910V682H2047V910ZM1365 1365V227H1592V910H1820V1137H1592V1365ZM2275 1365V682H2047V455H2275V227H2502V1365ZM1592 227V0H2275V227Z" fill="#050505" filter="url(#whiteglow)"/>
+<path d="M2730 1592V1365H2957V1592Z" fill="url(#navRainbow)"/>
+<path d="M4095 1592V682H4322V1592ZM3185 1592V455H4095V682H3412V1592Z" fill="url(#navRainbow)"/>
+<path d="M4550 1365V1137H4777V1365ZM4777 1592V1365H5460V1137H4777V910H5460V682H5687V1592ZM4777 682V455H5460V682Z" fill="url(#navRainbow)"/>
+<path d="M6370 1592V1365H6597V1592ZM6142 1365V1137H6370V1365ZM6597 1365V1137H6825V1365ZM5915 1137V455H6142V1137ZM6825 1137V455H7052V1137Z" fill="url(#navRainbow)"/>
 </svg>
