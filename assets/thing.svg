@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+  <filter id="whiteglow">
+    <feGaussianBlur stdDeviation="3" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+  <filter id="huecycle">
+    <feColorMatrix type="hueRotate">
+      <animate attributeName="values"
+               from="0" to="360"
+               dur="4s"
+               repeatCount="indefinite"/>
+    </feColorMatrix>
+  </filter>
+</defs>
+
+<path d="M0,20 h10 v10 h-10 z M40,20 h10 v10 h-10 z M0,30 h10 v10 h-10 z M40,30 h10 v10 h-10 z M0,40 h10 v10 h-10 z M40,40 h10 v10 h-10 z M10,50 h10 v10 h-10 z M30,50 h10 v10 h-10 z M20,60 h10 v10 h-10 z" fill="black" filter="url(#whiteglow)"/>
+<path d="M66,0 h10 v10 h-10 z M76,0 h10 v10 h-10 z M86,0 h10 v10 h-10 z M56,10 h10 v10 h-10 z M96,10 h10 v10 h-10 z M56,20 h10 v10 h-10 z M86,20 h10 v10 h-10 z M96,20 h10 v10 h-10 z M56,30 h10 v10 h-10 z M76,30 h10 v10 h-10 z M96,30 h10 v10 h-10 z M56,40 h10 v10 h-10 z M66,40 h10 v10 h-10 z M96,40 h10 v10 h-10 z M56,50 h10 v10 h-10 z M96,50 h10 v10 h-10 z M66,60 h10 v10 h-10 z M76,60 h10 v10 h-10 z M86,60 h10 v10 h-10 z" fill="black" filter="url(#whiteglow)"/>
+<path d="M112,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
+<path d="M128,20 h10 v10 h-10 z M138,20 h10 v10 h-10 z M148,20 h10 v10 h-10 z M158,20 h10 v10 h-10 z M128,30 h10 v10 h-10 z M168,30 h10 v10 h-10 z M128,40 h10 v10 h-10 z M168,40 h10 v10 h-10 z M128,50 h10 v10 h-10 z M168,50 h10 v10 h-10 z M128,60 h10 v10 h-10 z M168,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
+<path d="M194,20 h10 v10 h-10 z M204,20 h10 v10 h-10 z M214,20 h10 v10 h-10 z M224,30 h10 v10 h-10 z M194,40 h10 v10 h-10 z M204,40 h10 v10 h-10 z M214,40 h10 v10 h-10 z M224,40 h10 v10 h-10 z M184,50 h10 v10 h-10 z M224,50 h10 v10 h-10 z M194,60 h10 v10 h-10 z M204,60 h10 v10 h-10 z M214,60 h10 v10 h-10 z M224,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
+<path d="M240,20 h10 v10 h-10 z M280,20 h10 v10 h-10 z M240,30 h10 v10 h-10 z M280,30 h10 v10 h-10 z M240,40 h10 v10 h-10 z M280,40 h10 v10 h-10 z M250,50 h10 v10 h-10 z M270,50 h10 v10 h-10 z M260,60 h10 v10 h-10 z" fill="red" filter="url(#huecycle)"/>
+</svg>
