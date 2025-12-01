@@ -33,23 +33,23 @@ v0.nav is a mineflayer-based automation toolkit for 0b0t.org. it ships with a ri
 4. **whitelist admins**
    - populate `data/whitelist.json` or run `.whitelist add <player>` after the bot is online.
 
-## configuration overview
+## configuration
 - `config/config.json` (ignored by git): runtime credentials, minecraft/discord settings, flight/safety defaults, log directory. it is created either by the wizard or by copying `config/config.example.json`.
 - `config/themes.json`: active cli theme + palette presets. the wizard seeds it from `config/themes.example.json`; use `.theme list` / `.theme set <name>` to swap without editing the file.
 - `data/` folder: whitelist, waypoints, bot state, and other persisted runtime artifacts. `data/v0.nav` is just the wizard sentinel.
 
-## cli & commands
+## cli
 - press `tab` to cycle focus across chat / status / server panels.
 - `pgup/pgdn` or mouse scroll to navigate history.
 - input panel displays a block cursor; type `.help` for commands.
 - the `.theme` command lists presets or switches the active palette. all command surfaces (cli, whispers, discord) share the same router and rbac rules.
 
-## discord integration
+## discord
 - optional; requires `config.discord.token` and `config.discord.channelId`.
 - registers slash commands inside the configured guild for flight, waypoints, tpa, and help.
 - posts live status embeds and arrival notifications when `statusMessageId` is set (auto-created if blank).
 
-## project structure (excerpt)
+## structure
 ```
 cli/             # terminal ui components
 commands/        # shared command handlers
@@ -60,7 +60,7 @@ modules/         # mineflayer modules (elytra, tpa, discord, commander, access c
 config/          # user-controlled configuration (ignored by git)
 ```
 
-## logging & data hygiene
+## logging
 - session logs live under `logs/` (ignored by git).
 - sensitive files (config, themes, data snapshots) are excluded via `.gitignore`; commit the `*.example.json` templates instead.
 - before publishing to github, ensure `config/config.json` and other secret-bearing files stay untracked.
