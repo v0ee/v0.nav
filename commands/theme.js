@@ -2,6 +2,7 @@ module.exports = {
     name: 'theme',
     description: 'List or switch CLI theme presets',
     usage: '.theme [list|set <name>]',
+    cliOnly: true,
     handler: async ({ args = [], respond = () => {}, themeManager }) => {
         if (!themeManager) {
             respond('Theme manager not configured.', 'red');

@@ -1,7 +1,9 @@
 const mineflayer = require('mineflayer');
+const { pathfinder, Movements } = require('mineflayer-pathfinder');
 const path = require('path');
 const ElytraFly = require('../modules/efly');
 const TpaModule = require('../modules/tpa');
+const AutoTunnel = require('../modules/autoTunnel');
 const Commander = require('../modules/commander');
 const { parseChatSegments } = require('../lib/chatParser');
 
@@ -35,6 +37,7 @@ function createBotManager({
     let bot = null;
     let elytraFly = null;
     let tpaModule = null;
+    let autoTunnel = null;
     let commander = null;
     let discordModule = null;
     let connectedAt = null;
@@ -60,6 +63,7 @@ function createBotManager({
     function spawnBot() {
         trackedPlayers.clear();
         bot = mineflayer.createBot(options);
+        bot.loadPlugin(pathfinder);
 
         const flightAdapter = {
             getFlightConfig: () => (getConfig?.().flight || {}),
@@ -69,16 +73,30 @@ function createBotManager({
         elytraFly = new ElytraFly(bot, resolvedFiles.state, flightAdapter);
         elytraFly.applyFlightConfig(getConfig?.().flight);
         tpaModule = new TpaModule(bot, accessControl, logger);
+        autoTunnel = new AutoTunnel(bot, {
+            logger,
+            forwardSystemLog
+        });
         commander = new Commander(bot, elytraFly, accessControl, resolvedFiles.waypoints, {
             commandRouter,
             forwardSystemLog,
             logger,
-            themeManager
+            themeManager,
+            getAutoTunnel: () => autoTunnel
         });
 
         bot.on('spawn', () => {
             connectedAt = Date.now();
             forwardSystemLog?.('Bot spawned!');
+            
+            try {
+                const mcData = require('minecraft-data')(bot.version);
+                const movements = new Movements(bot, mcData);
+                bot.pathfinder.setMovements(movements);
+            } catch (err) {
+                forwardSystemLog?.('[Pathfinder] Failed to setup movements: ' + err.message, 'yellow');
+            }
+            
             setTimeout(async () => {
                 try {
                     await elytraFly.resume();
@@ -229,6 +247,7 @@ function createBotManager({
         requestShutdown,
         getBot: () => bot,
         getElytraFly: () => elytraFly,
+        getAutoTunnel: () => autoTunnel,
         getCommander: () => commander,
         getConnectedAt: () => connectedAt,
         isReconnectEnabled: () => shouldReconnect,

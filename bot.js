@@ -55,7 +55,16 @@ function startFlightBot() {
     const themeManager = createThemeManager({ filePath: path.join(__dirname, 'config', 'themes.json') });
     let stopConfigWatch = () => {};
 
-    const options = { ...config.minecraft };
+    const options = {
+        ...config.minecraft,
+        onMsaCode: (data) => {
+            forwardSystemLog('========================================', 'cyan');
+            forwardSystemLog('Microsoft Login Required!', 'yellow');
+            forwardSystemLog(`Go to: ${data.verification_uri}`, 'cyan');
+            forwardSystemLog(`Enter code: ${data.user_code}`, 'green');
+            forwardSystemLog('========================================', 'cyan');
+        }
+    };
 
     const commandRouter = createCommandRouter({
         prefix: '.',
@@ -97,6 +106,7 @@ function startFlightBot() {
         statusPanel.refresh({
             bot: botManager.getBot(),
             elytraFly: botManager.getElytraFly(),
+            autoTunnel: botManager.getAutoTunnel(),
             connectedAt: botManager.getConnectedAt()
         });
     };
@@ -110,6 +120,7 @@ function startFlightBot() {
         logChatMessage,
         getBot: botManager.getBot,
         getElytraFly: botManager.getElytraFly,
+        getAutoTunnel: botManager.getAutoTunnel,
         getCommander: botManager.getCommander,
         accessControl,
         logger,

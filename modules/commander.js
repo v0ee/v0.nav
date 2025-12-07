@@ -12,6 +12,7 @@ class Commander {
         this.forwardSystemLog = options.forwardSystemLog;
         this.logger = options.logger;
         this.themeManager = options.themeManager;
+        this.getAutoTunnel = options.getAutoTunnel;
 
         if (!this.commandRouter || !this.accessControl) {
             throw new Error('Commander requires command router and access control instances');
@@ -76,6 +77,13 @@ class Commander {
         }
         const name = raw.toLowerCase();
         if (!name) return;
+        
+        const command = this.commandRouter.resolve(name);
+        if (command && command.cliOnly) {
+            this.respond(username, 'This command is only available in CLI.');
+            return;
+        }
+        
         const context = this.buildCommandContext(username, uuid);
         const result = await this.commandRouter.executeCommand(name, parts, context);
         if (!result.ok && result.error) {
@@ -91,6 +99,7 @@ class Commander {
             respond: (msg, color) => this.respond(username, msg, color),
             getBot: () => this.bot,
             getElytraFly: () => this.elytraFly,
+            getAutoTunnel: this.getAutoTunnel,
             getCommander: () => this,
             accessControl: this.accessControl,
             logger: this.logger,
