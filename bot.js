@@ -57,6 +57,8 @@ function startFlightBot() {
 
     const options = {
         ...config.minecraft,
+        checkTimeoutInterval: 60000,
+        closeTimeout: 120000,
         onMsaCode: (data) => {
             forwardSystemLog('========================================', 'cyan');
             forwardSystemLog('Microsoft Login Required!', 'yellow');

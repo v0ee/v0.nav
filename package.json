@@ -12,6 +12,7 @@
   "dependencies": {
     "discord.js": "^14.11.0",
     "mineflayer": "^4.33.0",
+    "mineflayer-pathfinder": "^2.4.5",
     "terminal-kit": "^3.1.2",
     "vec3": "^0.1.10"
   }

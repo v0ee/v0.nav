@@ -120,6 +120,40 @@ class AccessControl {
         }
     }
 
+    async removeEntry(identifier) {
+        let uuid = null;
+        
+        if (isUuid(identifier)) {
+            uuid = normalizeUuid(identifier);
+        } else {
+            const key = identifier.toLowerCase();
+            uuid = this.nameIndex.get(key);
+            
+            if (!uuid) {
+                for (const entry of this.entries.values()) {
+                    if (entry.lastSeenAs && entry.lastSeenAs.toLowerCase() === key) {
+                        uuid = entry.uuid;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!uuid || !this.entries.has(uuid)) {
+            return null;
+        }
+        
+        const entry = this.entries.get(uuid);
+        this.entries.delete(uuid);
+        
+        if (entry.lastSeenAs) {
+            this.nameIndex.delete(entry.lastSeenAs.toLowerCase());
+        }
+        
+        this.persist();
+        return entry;
+    }
+
     listEntries() {
         return Array.from(this.entries.values());
     }
@@ -161,6 +195,21 @@ class AccessControl {
     isTrusted({ uuid, username }) {
         const role = this.getRole({ uuid, username });
         return role === 'admin' || role === 'whitelist';
+    }
+
+    isOwner({ uuid, username }) {
+        const normalizedUuid = normalizeUuid(uuid);
+        if (normalizedUuid && normalizedUuid === this.ownerUuid) {
+            return true;
+        }
+        if (username) {
+            const key = username.toLowerCase();
+            const mappedUuid = this.nameIndex.get(key);
+            if (mappedUuid && mappedUuid === this.ownerUuid) {
+                return true;
+            }
+        }
+        return false;
     }
 
     async resolveProfile(identifier) {

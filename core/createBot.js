@@ -167,7 +167,17 @@ function createBotManager({
         });
 
         bot.on('error', (err) => forwardSystemLog?.(`Error: ${err.message}`, 'red'));
-        bot.on('kicked', (reason) => forwardSystemLog?.(`Kicked: ${reason}`));
+        bot.on('kicked', (reason) => {
+            let reasonStr;
+            if (typeof reason === 'string') {
+                reasonStr = reason;
+            } else if (reason && typeof reason === 'object') {
+                reasonStr = reason.text || reason.translate || JSON.stringify(reason);
+            } else {
+                reasonStr = String(reason);
+            }
+            forwardSystemLog?.(`Kicked: ${reasonStr}`, 'red');
+        });
 
         try {
             const DiscordModule = require('../modules/discord');

@@ -59,27 +59,37 @@ class Commander {
         if (uuid) {
             this.accessControl.recordSeen({ uuid, username });
         }
+
+        const trimmed = (message || '').trim();
+        if (!trimmed) return;
+        
+        const prefix = this.commandRouter.prefix || '.';
+        if (!trimmed.startsWith(prefix)) {
+            return;
+        }
+        
         if (!this.accessControl.isAdmin({ uuid, username })) {
             this.logger?.log('security', 'command.denied', { username, uuid, reason: 'not-admin' });
             this.respond(username, 'You do not have permission to run commands.');
             return;
         }
 
-        const trimmed = (message || '').trim();
-        if (!trimmed) return;
         const parts = trimmed.split(/\s+/);
         if (!parts.length) return;
         let raw = parts.shift();
         if (!raw) return;
-        const prefix = this.commandRouter.prefix || '';
-        if (prefix && raw.startsWith(prefix)) {
+        if (raw.startsWith(prefix)) {
             raw = raw.slice(prefix.length);
         }
         const name = raw.toLowerCase();
         if (!name) return;
         
         const command = this.commandRouter.resolve(name);
-        if (command && command.cliOnly) {
+        if (!command) {
+            return;
+        }
+        
+        if (command.cliOnly) {
             this.respond(username, 'This command is only available in CLI.');
             return;
         }
