@@ -187,7 +187,7 @@ async function addInstance(ctx, instanceManager, args) {
 
     const name = args[0];
     const host = args[1] || '0b0t.org';
-    const username = args[2] || 'FlightBot';
+    const username = args[2] || 'v0nav';
 
     const existing = instanceManager.getInstances().find(i => 
         i.name.toLowerCase() === name.toLowerCase()

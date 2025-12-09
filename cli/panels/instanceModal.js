@@ -20,7 +20,7 @@ class InstanceModal {
         this.mode = 'list'; 
         this.addInputBuffer = '';
         this.addField = 'name'; 
-        this.newInstanceData = { name: '', host: '0b0t.org', username: '' };
+        this.newInstanceData = { name: '', host: '0b0t.org', username: 'v0nav' };
         this.actionTargetId = null;
     }
 
@@ -29,7 +29,7 @@ class InstanceModal {
         this.selectedIndex = 0;
         this.mode = 'list';
         this.addInputBuffer = '';
-        this.newInstanceData = { name: '', host: '0b0t.org', username: '' };
+        this.newInstanceData = { name: '', host: '0b0t.org', username: 'v0nav' };
     }
 
     hide() {

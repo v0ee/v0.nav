@@ -13,9 +13,9 @@ const fs = require('fs');
 const { parseChatSegments } = require('../lib/chatParser');
 const { getOnlinePlayers, computeEta } = require('../lib/statusPanel');
 
-const INPUT_BUTTON_ID = 'flightbot.input';
-const INPUT_MODAL_ID = 'flightbot.input.modal';
-const INPUT_FIELD_ID = 'flightbot.input.field';
+const INPUT_BUTTON_ID = 'v0nav.input';
+const INPUT_MODAL_ID = 'v0nav.input.modal';
+const INPUT_FIELD_ID = 'v0nav.input.field';
 const CHAT_HISTORY_LIMIT = 12;
 const DISCORD_UPDATE_MIN_INTERVAL = 1000;
 
@@ -360,7 +360,7 @@ class DiscordModule {
         if (interaction.customId !== INPUT_BUTTON_ID) return;
         const modal = new ModalBuilder()
             .setCustomId(INPUT_MODAL_ID)
-            .setTitle('FlightBot Input');
+            .setTitle('v0.nav Input');
         const input = new TextInputBuilder()
             .setCustomId(INPUT_FIELD_ID)
             .setLabel('Type a command or chat line')

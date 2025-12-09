@@ -21,6 +21,7 @@ const { AccessControl } = require('./modules/accessControl');
 const { createThemeManager } = require('./lib/themeManager');
 const { createInstanceManager } = require('./lib/instanceManager');
 const { createMultiBotManager } = require('./lib/multiBotManager');
+const updateManager = require('./lib/updateManager');
 
 const UI_REFRESH_MS = 1500;
 
@@ -28,7 +29,7 @@ const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
 
 main().catch(err => {
-    originalConsoleError('FlightBot failed to start:', err);
+    originalConsoleError('v0.nav failed to start:', err);
     process.exit(1);
 });
 
@@ -176,10 +177,26 @@ function startFlightBot() {
     console.log = (...args) => forwardSystemLog(formatArgs(args), 'cyan');
     console.error = (...args) => forwardSystemLog(formatArgs(args), 'red');
 
-    forwardSystemLog('FlightBot CLI ready. Press F2 to open Instance Manager.', 'green');
+    forwardSystemLog('v0.nav CLI ready. Press F2 to open Instance Manager.', 'green');
     forwardSystemLog('Type .help for commands. Start instances from the Instance Manager.', 'cyan');
 
     (async () => {
+        try {
+            const updateInfo = await updateManager.checkForUpdates({ repoPath: __dirname });
+            if (updateInfo?.hasCustomCode) {
+                const details = updateInfo.customCodeDetails || {};
+                const files = [...new Set([...(details.workingTree || []), ...(details.committed || [])])];
+                const preview = files.length ? `${files.slice(0, 2).join(', ')}${files.length > 2 ? ` (+${files.length - 2} more)` : ''}` : 'custom code changes';
+                forwardSystemLog(`[Update] Custom code detected (${preview}). You're running a custom v0.nav build and support isn't guaranteed.`, 'magenta');
+            }
+            if (updateInfo?.status === 'behind') {
+                const warn = `[Update] A new version (${updateInfo.remoteHash}) is available. Run .update for the best experience.`;
+                forwardSystemLog(warn, 'yellow');
+            }
+        } catch (err) {
+            forwardSystemLog(`[Update] Failed to check for updates: ${err.message}`, 'red');
+        }
+
         const restored = await multiBotManager.restorePreviousSession();
         if (!restored) {
             const firstInstance = instanceManager.getActiveInstance() || instanceManager.getInstances()[0];
