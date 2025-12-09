@@ -10,7 +10,11 @@ function createCliHandler({
     logger,
     refreshStatus,
     requestShutdown,
-    themeManager
+    themeManager,
+    instanceManager,
+    multiBotManager,
+    onInstanceStart,
+    onInstanceStop
 }) {
     if (!commandRouter) throw new Error('CLI handler requires a command router');
     const respond = (message, color) => {
@@ -40,7 +44,7 @@ function createCliHandler({
                 logChatMessage(`<You> ${trimmed}`, 'yellow');
             }
         } else {
-            respond('Bot not ready yet.', 'red');
+            respond('No active bot. Press F2 to start an instance.', 'red');
         }
     }
 
@@ -63,6 +67,10 @@ function createCliHandler({
             requestShutdown,
             logChatMessage,
             themeManager,
+            instanceManager,
+            multiBotManager,
+            onInstanceStart,
+            onInstanceStop,
             initiator: {
                 type: 'cli',
                 username: 'cli'

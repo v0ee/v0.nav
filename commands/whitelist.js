@@ -85,5 +85,49 @@ function handleList({ respond, accessControl }) {
         const label = entry.lastSeenAs ? `${entry.lastSeenAs} (${entry.uuid})` : entry.uuid;
         return `${label} - ${entry.role} (added by ${entry.addedBy})`;
     });
-    respond(lines.join(' | '));
+    chunkAndRespond(lines, respond);
+    respond(`Total entries: ${entries.length}`);
+}
+
+function chunkAndRespond(lines, respond, maxLen = 180) {
+    if (!Array.isArray(lines) || !lines.length) {
+        return;
+    }
+
+    let buffer = '';
+
+    const flush = () => {
+        if (buffer.length) {
+            respond(buffer);
+            buffer = '';
+        }
+    };
+
+    for (const line of lines) {
+        const entry = String(line || '');
+        if (!entry.length) continue;
+
+        if (entry.length > maxLen) {
+            flush();
+            for (let i = 0; i < entry.length; i += maxLen) {
+                respond(entry.slice(i, i + maxLen));
+            }
+            continue;
+        }
+
+        if (!buffer.length) {
+            buffer = entry;
+            continue;
+        }
+
+        const candidate = `${buffer} | ${entry}`;
+        if (candidate.length > maxLen) {
+            flush();
+            buffer = entry;
+        } else {
+            buffer = candidate;
+        }
+    }
+
+    flush();
 }

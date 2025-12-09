@@ -141,7 +141,7 @@ function createBotManager({
                 const waypointName = elytraFly.currentWaypointName;
                 const label = waypointName ? `waypoint "${waypointName}"` : 'target';
                 forwardSystemLog?.(`[SAFETY] Arrived near ${label} (Distance: ${Math.round(dist)}). Entering hover mode.`);
-                elytraFly.stop();
+                elytraFly.enterHoverMode('arrival');
                 elytraFly.ensureHovering().catch(err => forwardSystemLog?.('[SAFETY] Hover mode failed: ' + err.message, 'red'));
                 if (discordModule && typeof discordModule.handleArrival === 'function') {
                     discordModule.handleArrival(waypointName).catch(err => forwardSystemLog?.('[Discord] Arrival notify failed: ' + err.message, 'red'));

@@ -7,8 +7,10 @@ npm-debug.log*
 
 config/config.json
 config/themes.json
+config/instances.json
 
 data/*.json
+data/instances/*
 data/v0.nav
 !data/README.md
 

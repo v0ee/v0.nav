@@ -23,6 +23,7 @@ class ElytraFly {
         this.currentWaypointName = null;
         this.hoverAltitude = null;
         this.onTick = this.onTick.bind(this);
+        this.recoveryInProgress = false;
         this.applyFlightConfig(this.getFlightConfig());
         
         this.loadState();
@@ -136,6 +137,44 @@ class ElytraFly {
         this.saveState();
     }
 
+    enterHoverMode(reason = 'hover') {
+        if (!this.bot) return;
+        if (!this.bot.listeners('physicsTick').includes(this.onTick)) {
+            this.bot.on('physicsTick', this.onTick);
+        }
+        this.active = true;
+        this.tryingToTakeOff = false;
+        this.target = null;
+        this.moveDir = 0;
+        this.heightDir = 0;
+        this.currentWaypointName = null;
+        if (this.bot.entity && this.bot.entity.position) {
+            this.hoverAltitude = this.bot.entity.position.y;
+        }
+        console.log(`[ElytraFly] Entering hover mode (${reason}).`);
+        this.saveState();
+    }
+
+    scheduleHoverRecovery(reason = 'recovery') {
+        if (this.recoveryInProgress) return;
+        this.recoveryInProgress = true;
+        setImmediate(async () => {
+            try {
+                this.enterHoverMode(reason);
+                const equipped = await this.ensureElytra();
+                if (equipped) {
+                    console.log('[ElytraFly] re-equipped elytra during recovery.');
+                } else {
+                    console.log('[ElytraFly] no elytra available during recovery.');
+                }
+            } catch (err) {
+                console.error('[ElytraFly] Hover recovery error:', err);
+            } finally {
+                this.recoveryInProgress = false;
+            }
+        });
+    }
+
     async ensureElytra() {
         const chestSlot = this.bot.getEquipmentDestSlot('torso');
         const chest = this.bot.inventory.slots[chestSlot];
@@ -170,7 +209,8 @@ class ElytraFly {
         const chestSlot = this.bot.getEquipmentDestSlot('torso');
         const chest = this.bot.inventory.slots[chestSlot];
         if (!chest || chest.name !== 'elytra') {
-            this.stop();
+            console.log('[ElytraFly] Elytra missing — scheduling hover recovery.');
+            this.scheduleHoverRecovery('elytra missing');
             return;
         }
 
@@ -201,12 +241,11 @@ class ElytraFly {
                 this.heightDir = 0;
             }
             
-            // Check if reached
             const distDx = pos.x - this.target.x;
             const distDz = pos.z - this.target.z;
             if (Math.sqrt(distDx*distDx + distDz*distDz) < 5) {
-                console.log('[ElytraFly] Target reached.');
-                this.stop();
+                console.log('[ElytraFly] Target reached. Scheduling hover.');
+                this.scheduleHoverRecovery('target reached');
                 return;
             }
         }
@@ -214,7 +253,7 @@ class ElytraFly {
         this.controlSpeed();
         this.controlHeight();
 
-        if (this.bot.entity.onGround && this.tryingToTakeOff) {
+        if (this.tryingToTakeOff) {
             this.doInstantFly();
             this.tryingToTakeOff = false;
         }

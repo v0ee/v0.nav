@@ -15,11 +15,12 @@ const {
 const { loadConfig, watchConfig, saveConfig } = require('./lib/config');
 const { createCliHandler } = require('./cli/handler');
 const { createStatusPanel } = require('./lib/statusPanel');
-const { createBotManager } = require('./core/createBot');
 const { createCommandRouter } = require('./lib/commandRouter');
 const { SessionLogger } = require('./lib/logger');
 const { AccessControl } = require('./modules/accessControl');
 const { createThemeManager } = require('./lib/themeManager');
+const { createInstanceManager } = require('./lib/instanceManager');
+const { createMultiBotManager } = require('./lib/multiBotManager');
 
 const UI_REFRESH_MS = 1500;
 
@@ -43,8 +44,14 @@ async function main() {
 function startFlightBot() {
     setConsoleHandlers(originalConsoleLog, originalConsoleError);
 
+    const instanceManager = createInstanceManager({
+        filePath: path.join(__dirname, 'config', 'instances.json')
+    });
+    instanceManager.loadSync();
+
     const cfgPath = path.join(__dirname, 'config', 'config.json');
     let config = loadConfig(cfgPath);
+
     const logger = new SessionLogger({ directory: path.resolve(__dirname, config.logging?.directory || 'logs') });
     const accessControl = new AccessControl({
         filePath: path.join(__dirname, 'data', 'whitelist.json'),
@@ -55,86 +62,112 @@ function startFlightBot() {
     const themeManager = createThemeManager({ filePath: path.join(__dirname, 'config', 'themes.json') });
     let stopConfigWatch = () => {};
 
-    const options = {
-        ...config.minecraft,
-        checkTimeoutInterval: 60000,
-        closeTimeout: 120000,
-        onMsaCode: (data) => {
-            forwardSystemLog('========================================', 'cyan');
-            forwardSystemLog('Microsoft Login Required!', 'yellow');
-            forwardSystemLog(`Go to: ${data.verification_uri}`, 'cyan');
-            forwardSystemLog(`Enter code: ${data.user_code}`, 'green');
-            forwardSystemLog('========================================', 'cyan');
-        }
-    };
-
     const commandRouter = createCommandRouter({
         prefix: '.',
         commandsDir: path.join(__dirname, 'commands'),
         logger
     });
 
-    const botManager = createBotManager({
-        options,
-        files: {
-            state: path.join(__dirname, 'data', 'state.json'),
-            waypoints: path.join(__dirname, 'data', 'waypoints.json'),
-            config: cfgPath
-        },
-        getConfig: () => config,
+    const multiBotManager = createMultiBotManager({
+        rootDir: __dirname,
+        logger,
+        accessControl,
+        themeManager,
+        commandRouter,
         logChatMessage,
         forwardSystemLog,
-        commandRouter,
-        accessControl,
-        logger,
+        baseConfig: config,
         saveConfig: (nextConfig) => saveConfig(cfgPath, nextConfig),
-        themeManager
+        instanceManager 
     });
+
+    const statusPanel = createStatusPanel({
+        options: config.minecraft,
+        updateUiStatus,
+        updateServerInfo
+    });
+
+    function refreshStatus() {
+        const activeEntry = multiBotManager.getActiveEntry();
+        const runningInstances = multiBotManager.getStatusInfo();
+        
+        statusPanel.refresh({
+            bot: activeEntry?.botManager?.getBot() || null,
+            elytraFly: activeEntry?.botManager?.getElytraFly() || null,
+            autoTunnel: activeEntry?.botManager?.getAutoTunnel() || null,
+            connectedAt: activeEntry?.botManager?.getConnectedAt() || null,
+            instanceName: activeEntry?.instance?.name || 'None',
+            runningCount: runningInstances.length,
+            runningInstances
+        });
+    }
 
     stopConfigWatch = watchConfig(cfgPath, next => {
         config = next;
         accessControl.setOwnerUuid(config.ownerUuid);
         forwardSystemLog('Config reloaded.');
-        botManager.applyConfig(config);
     });
 
-    const statusPanel = createStatusPanel({
-        options,
-        updateUiStatus,
-        updateServerInfo
-    });
-
-    const refreshStatus = () => {
-        statusPanel.refresh({
-            bot: botManager.getBot(),
-            elytraFly: botManager.getElytraFly(),
-            autoTunnel: botManager.getAutoTunnel(),
-            connectedAt: botManager.getConnectedAt()
-        });
-    };
-
-    setInterval(refreshStatus, UI_REFRESH_MS);
+    const refreshInterval = setInterval(refreshStatus, UI_REFRESH_MS);
     refreshStatus();
+
+    function handleInstanceStart(instance) {
+        forwardSystemLog(`Starting instance: ${instance.name} (${instance.minecraft?.host})...`, 'cyan');
+        multiBotManager.startInstance(instance);
+    }
+
+    function handleInstanceStop(instanceId) {
+        multiBotManager.stopInstance(instanceId);
+    }
+
+    function handleSetActiveInstance(instanceId) {
+        if (multiBotManager.setActiveInstance(instanceId)) {
+            const entry = multiBotManager.getActiveEntry();
+            forwardSystemLog(`Active instance set to: ${entry?.instance?.name || instanceId}`, 'green');
+        }
+    }
 
     const cliHandler = createCliHandler({
         commandRouter,
         forwardSystemLog,
         logChatMessage,
-        getBot: botManager.getBot,
-        getElytraFly: botManager.getElytraFly,
-        getAutoTunnel: botManager.getAutoTunnel,
-        getCommander: botManager.getCommander,
+        getBot: () => multiBotManager.getActiveBot(),
+        getElytraFly: () => multiBotManager.getActiveBotManager()?.getElytraFly() || null,
+        getAutoTunnel: () => multiBotManager.getActiveBotManager()?.getAutoTunnel() || null,
+        getCommander: () => multiBotManager.getActiveBotManager()?.getCommander() || null,
         accessControl,
         logger,
         refreshStatus,
-        requestShutdown: botManager.requestShutdown,
-        themeManager
+        requestShutdown: (opts) => {
+            if (opts?.forceExit) {
+                multiBotManager.stopAll('shutdown');
+                setTimeout(() => process.exit(0), 500);
+            } else {
+                const activeId = multiBotManager.getActiveInstanceId();
+                if (activeId) {
+                    multiBotManager.stopInstance(activeId, opts?.reason || 'manual quit');
+                }
+            }
+        },
+        themeManager,
+        instanceManager,
+        multiBotManager,
+        onInstanceStart: handleInstanceStart,
+        onInstanceStop: handleInstanceStop
     });
 
     initCli({
         onSubmit: cliHandler.handleUserInput,
-        onCtrlC: cliHandler.handleCliExit,
-        themeManager
+        onCtrlC: () => {
+            multiBotManager.stopAll('shutdown');
+            setTimeout(() => process.exit(0), 500);
+        },
+        themeManager,
+        instanceManager,
+        multiBotManager,
+        onInstanceStart: handleInstanceStart,
+        onInstanceStop: handleInstanceStop,
+        onSetActiveInstance: handleSetActiveInstance
     }).catch(err => {
         originalConsoleError('Failed to initialize CLI:', err);
         process.exit(1);
@@ -143,11 +176,22 @@ function startFlightBot() {
     console.log = (...args) => forwardSystemLog(formatArgs(args), 'cyan');
     console.error = (...args) => forwardSystemLog(formatArgs(args), 'red');
 
-    forwardSystemLog('FlightBot CLI ready. Type .help for commands.');
+    forwardSystemLog('FlightBot CLI ready. Press F2 to open Instance Manager.', 'green');
+    forwardSystemLog('Type .help for commands. Start instances from the Instance Manager.', 'cyan');
 
-    botManager.start();
+    (async () => {
+        const restored = await multiBotManager.restorePreviousSession();
+        if (!restored) {
+            const firstInstance = instanceManager.getActiveInstance() || instanceManager.getInstances()[0];
+            if (firstInstance) {
+                forwardSystemLog(`Auto-starting instance: ${firstInstance.name}...`, 'cyan');
+                multiBotManager.startInstance(firstInstance);
+            }
+        }
+    })();
 
     process.once('exit', () => {
+        clearInterval(refreshInterval);
         stopConfigWatch();
         themeManager.close();
         logger.close('process-exit');

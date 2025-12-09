@@ -37,6 +37,7 @@ const { renderStatusPanel } = require('./panels/status');
 const { renderServerPanel } = require('./panels/server');
 const { renderInputPanel } = require('./panels/input');
 const { wrapText, wrapSegments } = require('./panels/common');
+const { createInstanceModal } = require('./panels/instanceModal');
 const {
     createSegment,
     buildAttr
@@ -49,6 +50,7 @@ const pendingLogs = [];
 let statusLines = ['Waiting for bot...'];
 let inputBuffer = '';
 let uiReady = false;
+let instanceModal = null;
 let renderScheduled = false;
 let terminalInitialized = false;
 let terminalCleanedUp = false;
@@ -77,7 +79,8 @@ let themeCleanupRegistered = false;
 
 let currentHandlers = {
     onSubmit: async () => {},
-    onCtrlC: () => process.exit(0)
+    onCtrlC: () => process.exit(0),
+    onInstanceSwitch: null
 };
 let originalConsoleLog = console.log;
 let originalConsoleError = console.error;
@@ -85,8 +88,57 @@ let originalConsoleError = console.error;
 async function initCli(options = {}) {
     currentHandlers = {
         onSubmit: typeof options.onSubmit === 'function' ? options.onSubmit : async () => {},
-        onCtrlC: typeof options.onCtrlC === 'function' ? options.onCtrlC : () => process.exit(0)
+        onCtrlC: typeof options.onCtrlC === 'function' ? options.onCtrlC : () => process.exit(0),
+        onInstanceStart: typeof options.onInstanceStart === 'function' ? options.onInstanceStart : null,
+        onInstanceStop: typeof options.onInstanceStop === 'function' ? options.onInstanceStop : null,
+        onSetActiveInstance: typeof options.onSetActiveInstance === 'function' ? options.onSetActiveInstance : null
     };
+
+    if (options.instanceManager && options.multiBotManager) {
+        instanceModal = createInstanceModal({
+            instanceManager: options.instanceManager,
+            multiBotManager: options.multiBotManager,
+            onStart: (instance) => {
+                if (currentHandlers.onInstanceStart) {
+                    currentHandlers.onInstanceStart(instance);
+                }
+            },
+            onStop: (instanceId) => {
+                if (currentHandlers.onInstanceStop) {
+                    currentHandlers.onInstanceStop(instanceId);
+                }
+            },
+            onSetActive: (instanceId) => {
+                if (currentHandlers.onSetActiveInstance) {
+                    currentHandlers.onSetActiveInstance(instanceId);
+                }
+                forwardSystemLog(`Set active instance: ${instanceId}`, 'cyan');
+            },
+            onClose: () => scheduleRender(),
+            onAddNew: (instance) => {
+                forwardSystemLog(`Created new instance: ${instance.name}`, 'green');
+            }
+        });
+        
+        options.multiBotManager.on('activeChanged', ({ instanceId, chatLogs }) => {
+            if (chatLogs && Array.isArray(chatLogs)) {
+                logEntries.length = 0;
+                chatLogs.forEach(entry => {
+                    if (entry) {
+                        logEntries.push(entry);
+                    }
+                });
+                panelScroll.chat.offset = 0;
+                scheduleRender();
+            }
+            const entry = options.multiBotManager.getActiveEntry();
+            forwardSystemLog(`Switched to instance: ${entry?.instance?.name || instanceId}`, 'green');
+        });
+        
+        forwardSystemLog('Instance modal initialized. Press F2 to open.', 'cyan');
+    } else if (options.instanceManager) {
+        forwardSystemLog('MultiBotManager not provided - instance modal disabled.', 'yellow');
+    }
 
     configureThemeManager(options.themeManager);
 
@@ -267,6 +319,23 @@ function handleKeypress(str, key = {}) {
         return;
     }
 
+    const isCtrlI = (key.ctrl && key.name === 'i') || 
+                    (key.ctrl && str === '\t') ||
+                    key.name === 'f2';
+    if (isCtrlI && instanceModal) {
+        instanceModal.toggle();
+        scheduleRender();
+        return;
+    }
+
+    if (instanceModal && instanceModal.isVisible()) {
+        const handled = instanceModal.handleKeypress(str, key);
+        if (handled) {
+            scheduleRender();
+            return;
+        }
+    }
+
     switch (key.name) {
         case 'up':
             adjustScroll(1);
@@ -426,6 +495,10 @@ function renderUi() {
     drawPanelDivider(screenBuffer, layout.status, layout.server);
     renderServerPanel(screenBuffer, layout.server, visibleServer, focusedPanel === 'server', context, panelThemes.server);
     renderInputPanel(screenBuffer, layout.input, inputBuffer, context, panelThemes.input, { showCursor: true });
+
+    if (instanceModal && instanceModal.isVisible()) {
+        instanceModal.render(screenBuffer, layout);
+    }
 
     screenBuffer.draw({ delta: true });
 }

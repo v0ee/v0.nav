@@ -1,0 +1,16 @@
+{
+  "activeInstanceId": null,
+  "instances": [
+    {
+      "id": "default",
+      "name": "Default",
+      "createdAt": 0,
+      "minecraft": {
+        "host": "0b0t.org",
+        "username": "FlightBot",
+        "auth": "microsoft",
+        "version": "1.20.4"
+      }
+    }
+  ]
+}
