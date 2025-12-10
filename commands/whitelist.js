@@ -20,7 +20,7 @@ module.exports = {
                 await handleRemove(args.slice(1), { respond, accessControl });
                 break;
             case 'list':
-                handleList({ respond, accessControl });
+                handleList({ respond, accessControl, initiator });
                 break;
             default:
                 respond('Usage: .whitelist <add|remove|list>', 'red');
@@ -75,18 +75,27 @@ async function handleRemove(args, { respond, accessControl }) {
     }
 }
 
-function handleList({ respond, accessControl }) {
+function handleList({ respond, accessControl, initiator }) {
     const entries = accessControl.listEntries();
     if (!entries.length) {
         respond('Whitelist is empty.');
         return;
     }
-    const lines = entries.map(entry => {
-        const label = entry.lastSeenAs ? `${entry.lastSeenAs} (${entry.uuid})` : entry.uuid;
-        return `${label} - ${entry.role} (added by ${entry.addedBy})`;
-    });
-    chunkAndRespond(lines, respond);
-    respond(`Total entries: ${entries.length}`);
+
+    const isCli = initiator?.type === 'cli';
+
+    if (isCli) {
+        const lines = entries.map(entry => {
+            const label = entry.lastSeenAs ? `${entry.lastSeenAs} (${entry.uuid})` : entry.uuid;
+            return `${label} - ${entry.role} (added by ${entry.addedBy})`;
+        });
+        chunkAndRespond(lines, respond);
+        respond(`Total entries: ${entries.length}`);
+    } else {
+        const names = entries.map(e => e.lastSeenAs || e.uuid);
+        const message = `Whitelisted (${entries.length}): ${names.join(', ')}`;
+        chunkAndRespond([message], respond, 230);
+    }
 }
 
 function chunkAndRespond(lines, respond, maxLen = 180) {

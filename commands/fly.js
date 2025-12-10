@@ -3,7 +3,7 @@ const { handleNumericConfig } = require('./helpers');
 module.exports = {
     name: 'fly',
     description: 'Manage ElytraFly module',
-    usage: '.fly <start|stop|speed|vspeed|fall|status> [value]',
+    usage: '.fly <start|stop|pause|resume|disable|speed|vspeed|fall|status> [value]',
     handler: async ({ args = [], respond = () => {}, getElytraFly }) => {
         const elytraFly = getElytraFly?.();
         if (!elytraFly) {
@@ -18,8 +18,21 @@ module.exports = {
                 break;
             }
             case 'stop':
+                elytraFly.stopAndHover('manual stop');
+                respond('ElytraFly target cleared; hovering in place.');
+                break;
+            case 'pause':
+                elytraFly.pause('manual pause');
+                respond('ElytraFly paused; maintaining hover. Use .fly resume to continue.');
+                break;
+            case 'resume': {
+                const resumed = await elytraFly.resumePausedTarget();
+                respond(resumed ? 'Resumed paused flight target.' : 'No paused flight to resume.');
+                break;
+            }
+            case 'disable':
                 elytraFly.stop();
-                respond('ElytraFly stopped.');
+                respond('ElytraFly fully disabled. Use .fly start to re-engage.');
                 break;
             case 'speed':
                 handleNumericConfig(respond, args[1], 'speed', value => {
@@ -45,7 +58,7 @@ module.exports = {
                 break;
             }
             default:
-                respond('Usage: .fly <start|stop|speed|vspeed|fall|status>', 'red');
+                respond('Usage: .fly <start|stop|pause|resume|disable|speed|vspeed|fall|status>', 'red');
         }
     }
 };

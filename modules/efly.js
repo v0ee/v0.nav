@@ -17,13 +17,19 @@ class ElytraFly {
         this.fallMultiplier = 0;
         this.heightDir = 0;
         this.moveDir = 0;   
-        this.tryingToTakeOff = false;
         this.active = false;
         this.target = null;
         this.currentWaypointName = null;
         this.hoverAltitude = null;
         this.onTick = this.onTick.bind(this);
         this.recoveryInProgress = false;
+        this.pausedState = null;
+        this.voidRecoveryActive = false;
+        this.voidRecoveryTargetY = 320;
+        this.voidSafetyTriggerY = -16;
+        this.lastGlideAttempt = 0;
+        this.needsInitialGlide = false;
+        this.glideAttemptInterval = 350;
         this.applyFlightConfig(this.getFlightConfig());
         
         this.loadState();
@@ -108,7 +114,10 @@ class ElytraFly {
         }
 
         this.active = true;
-        this.tryingToTakeOff = true;
+        this.needsInitialGlide = true;
+        this.pausedState = null;
+        this.voidRecoveryActive = false;
+        this.lastGlideAttempt = 0;
         
         await this.bot.look(this.bot.entity.yaw, 0, true);
         
@@ -127,14 +136,51 @@ class ElytraFly {
 
     stop() {
         this.active = false;
-        this.tryingToTakeOff = false;
+        this.needsInitialGlide = false;
         this.bot.removeListener('physicsTick', this.onTick);
         this.target = null;
         this.moveDir = 0;
         this.heightDir = 0;
         this.hoverAltitude = null;
         this.currentWaypointName = null;
+        this.lastGlideAttempt = 0;
+        this.pausedState = null;
+        this.voidRecoveryActive = false;
         this.saveState();
+    }
+
+    cleanup() {
+        this.bot.removeListener('physicsTick', this.onTick);
+        this.active = false;
+        this.needsInitialGlide = false;
+    }
+
+    stopAndHover(reason = 'manual stop') {
+        this.pausedState = null;
+        this.target = null;
+        this.enterHoverMode(reason);
+    }
+
+    pause(reason = 'manual pause') {
+        if (this.target) {
+            this.pausedState = {
+                target: { x: this.target.x, y: this.target.y, z: this.target.z },
+                waypointName: this.currentWaypointName
+            };
+        } else {
+            this.pausedState = null;
+        }
+        this.enterHoverMode(reason);
+        return true;
+    }
+
+    async resumePausedTarget() {
+        if (!this.pausedState || !this.pausedState.target) {
+            return false;
+        }
+        const payload = this.pausedState;
+        this.pausedState = null;
+        return this.setTarget(payload.target, { waypointName: payload.waypointName });
     }
 
     enterHoverMode(reason = 'hover') {
@@ -143,11 +189,12 @@ class ElytraFly {
             this.bot.on('physicsTick', this.onTick);
         }
         this.active = true;
-        this.tryingToTakeOff = false;
         this.target = null;
         this.moveDir = 0;
         this.heightDir = 0;
         this.currentWaypointName = null;
+        this.needsInitialGlide = true;
+        this.lastGlideAttempt = 0;
         if (this.bot.entity && this.bot.entity.position) {
             this.hoverAltitude = this.bot.entity.position.y;
         }
@@ -199,6 +246,7 @@ class ElytraFly {
         this.active = true;
         this.hoverAltitude = null;
         this.currentWaypointName = options.waypointName || null;
+        this.pausedState = null;
         this.saveState();
         return this.start();
     }
@@ -206,11 +254,17 @@ class ElytraFly {
     onTick() {
         if (!this.active) return;
 
+        this.handleVoidSafety();
+
         const chestSlot = this.bot.getEquipmentDestSlot('torso');
         const chest = this.bot.inventory.slots[chestSlot];
         if (!chest || chest.name !== 'elytra') {
             console.log('[ElytraFly] Elytra missing — scheduling hover recovery.');
             this.scheduleHoverRecovery('elytra missing');
+            return;
+        }
+
+        if (!this.ensureGliding()) {
             return;
         }
 
@@ -253,14 +307,47 @@ class ElytraFly {
         this.controlSpeed();
         this.controlHeight();
 
-        if (this.tryingToTakeOff) {
-            this.doInstantFly();
-            this.tryingToTakeOff = false;
+    }
+
+    handleVoidSafety() {
+        if (!this.bot || !this.bot.entity || !this.bot.entity.position) return;
+        const pos = this.bot.entity.position;
+        const triggerY = this.getVoidSafetyTriggerY();
+        if (pos.y <= triggerY) {
+            if (!this.voidRecoveryActive) {
+                console.log(`[ElytraFly] Void safety triggered at Y=${pos.y}. Initiating emergency hover.`);
+                this.enterHoverMode('void safety');
+                this.voidRecoveryActive = true;
+            }
+            this.moveDir = 0;
+            this.heightDir = 1;
+            this.hoverAltitude = this.voidRecoveryTargetY;
+        }
+
+        if (this.voidRecoveryActive && pos.y >= this.voidRecoveryTargetY) {
+            this.voidRecoveryActive = false;
+            this.hoverAltitude = pos.y;
+            console.log('[ElytraFly] Void safety complete. Hovering at safe altitude.');
         }
     }
+
+    getVoidSafetyTriggerY() {
+        const dim = this.bot && this.bot.game ? this.bot.game.dimension : null;
+        if (dim === 'minecraft:the_nether') {
+            return -2;
+        }
+        return this.voidSafetyTriggerY;
+    }
+
     controlHeight() {
         const vel = this.bot.entity.velocity;
         const pos = this.bot.entity.position;
+
+        if (this.voidRecoveryActive) {
+            const climb = Math.max(this.verticalSpeed, 1);
+            this.bot.entity.velocity.set(vel.x, climb, vel.z);
+            return;
+        }
 
         if (!this.target) {
             if (pos) {
@@ -322,6 +409,27 @@ class ElytraFly {
             });
             this.bot.setControlState('jump', false);
         }, 55);
+    }
+
+    ensureGliding() {
+        if (!this.bot || !this.bot.entity) return false;
+        const isGliding = !!this.bot.entity.elytraFlying;
+        if (isGliding) {
+            this.needsInitialGlide = false;
+            return true;
+        }
+        const now = Date.now();
+        if (!this.needsInitialGlide) {
+            this.needsInitialGlide = true;
+            this.lastGlideAttempt = now;
+            this.doInstantFly();
+            return false;
+        }
+        if (now - this.lastGlideAttempt >= this.glideAttemptInterval) {
+            this.lastGlideAttempt = now;
+            this.doInstantFly();
+        }
+        return false;
     }
 }
 

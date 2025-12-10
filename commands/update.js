@@ -10,7 +10,7 @@ module.exports = {
         try {
             const result = await updateManager.applyUpdates({ repoPath: path.resolve(__dirname, '..') });
             if (result.updated) {
-                respond(`Updated to latest ${result.status.branch} (${result.status.localHash}). Please restart FlightBot to apply changes.`, 'green');
+                respond(`Updated to latest ${result.status.branch} (${result.status.localHash}). Please restart v0.nav to apply changes.`, 'green');
             } else {
                 respond('Already up to date.', 'cyan');
             }

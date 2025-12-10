@@ -4,6 +4,9 @@ const path = require('path');
 const ElytraFly = require('../modules/efly');
 const TpaModule = require('../modules/tpa');
 const AutoTunnel = require('../modules/autoTunnel');
+const AutoTotem = require('../modules/autoTotem');
+const AutoArmor = require('../modules/autoArmor');
+const AutoEat = require('../modules/autoEat');
 const Commander = require('../modules/commander');
 const { parseChatSegments } = require('../lib/chatParser');
 
@@ -38,6 +41,9 @@ function createBotManager({
     let elytraFly = null;
     let tpaModule = null;
     let autoTunnel = null;
+    let autoTotem = null;
+    let autoArmor = null;
+    let autoEat = null;
     let commander = null;
     let discordModule = null;
     let connectedAt = null;
@@ -76,6 +82,12 @@ function createBotManager({
         autoTunnel = new AutoTunnel(bot, {
             logger,
             forwardSystemLog
+        });
+        autoTotem = new AutoTotem(bot, { forwardSystemLog });
+        autoArmor = new AutoArmor(bot, { forwardSystemLog });
+        autoEat = new AutoEat(bot, {
+            forwardSystemLog,
+            getAutoTunnel: () => autoTunnel
         });
         commander = new Commander(bot, elytraFly, accessControl, resolvedFiles.waypoints, {
             commandRouter,
@@ -155,7 +167,19 @@ function createBotManager({
             trackedPlayers.clear();
             destroyDiscord();
             if (elytraFly) {
-                elytraFly.stop();
+                elytraFly.cleanup();
+            }
+            if (autoTotem) {
+                autoTotem.destroy();
+                autoTotem = null;
+            }
+            if (autoArmor) {
+                autoArmor.destroy();
+                autoArmor = null;
+            }
+            if (autoEat) {
+                autoEat.destroy();
+                autoEat = null;
             }
             if (shouldReconnect) {
                 forwardSystemLog?.('Reconnecting in 5 seconds...');
@@ -258,6 +282,9 @@ function createBotManager({
         getBot: () => bot,
         getElytraFly: () => elytraFly,
         getAutoTunnel: () => autoTunnel,
+        getAutoTotem: () => autoTotem,
+        getAutoArmor: () => autoArmor,
+        getAutoEat: () => autoEat,
         getCommander: () => commander,
         getConnectedAt: () => connectedAt,
         isReconnectEnabled: () => shouldReconnect,
