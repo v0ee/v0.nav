@@ -20,7 +20,9 @@ function createBotManager({
     commandRouter,
     accessControl,
     logger,
-    themeManager
+    themeManager,
+    instanceId,
+    instanceName
 }) {
     if (!options) throw new Error('createBotManager requires options');
     const rootDir = path.resolve(__dirname, '..');
@@ -185,8 +187,7 @@ function createBotManager({
                 forwardSystemLog?.('Reconnecting in 5 seconds...');
                 setTimeout(spawnBot, 5000);
             } else {
-                forwardSystemLog?.('Bot finished. Exiting process.');
-                process.exit(0);
+                forwardSystemLog?.('Bot stopped. Instance terminated.');
             }
         });
 
@@ -215,7 +216,9 @@ function createBotManager({
                     getConfig,
                     saveConfig,
                     themeManager,
-                    logChatMessage
+                    logChatMessage,
+                    instanceId: instanceId || 'default',
+                    instanceName: instanceName || 'main'
                 });
                 if (discordModule && typeof discordModule.updateConfig === 'function') {
                     discordModule.updateConfig(config);
@@ -225,6 +228,9 @@ function createBotManager({
             }
         } catch (e) {
             forwardSystemLog?.('[Discord] Discord module not available or failed to load: ' + e.message, 'red');
+            if (logger && typeof logger.logError === 'function') {
+                logger.logError('Discord module initialization failed', e, { instanceId, instanceName });
+            }
         }
     }
 

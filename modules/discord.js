@@ -46,6 +46,9 @@ class DiscordModule {
         this.updateTimer = null;
         this.getConfigFn = options.getConfig;
         this.saveConfigFn = options.saveConfig;
+        
+        this.instanceId = options.instanceId || 'default';
+        this.instanceName = options.instanceName || 'main';
 
         if (!this.commandRouter) {
             throw new Error('Discord module requires a command router instance');
@@ -64,14 +67,14 @@ class DiscordModule {
         }
 
         if (!this.config.discord || !this.config.discord.token || !this.config.discord.channelId) {
-            console.log('[Discord] Missing token or channelId in config. Skipping Discord initialization.');
+            console.log(`[Discord] [${this.instanceName}] Missing token or channelId in config. Skipping Discord initialization.`);
             return;
         }
 
         this.client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
         this.client.once('ready', async () => {
-            console.log(`[Discord] Logged in as ${this.client.user.tag}`);
+            console.log(`[Discord] [${this.instanceName}] Logged in as ${this.client.user.tag}`);
             try {
                 const channel = await this.client.channels.fetch(this.config.discord.channelId);
                 if (!channel) {
@@ -604,13 +607,15 @@ class DiscordModule {
     }
 
     buildServerEmbed(theme = {}) {
+        const instanceLabel = this.instanceName !== 'main' ? ` [${this.instanceName}]` : '';
         const embed = new EmbedBuilder()
-            .setTitle(this.getPanelTitle(theme, 'Server'))
+            .setTitle(this.getPanelTitle(theme, 'Server') + instanceLabel)
             .setColor(this.resolvePanelColor(theme, '#5865f2'))
             .setTimestamp(new Date());
 
         const players = getOnlinePlayers(this.bot);
         embed.addFields(
+            { name: 'Instance', value: this.instanceName, inline: true },
             { name: 'IP', value: this.getHostLabel(), inline: true },
             { name: 'Online', value: this.getUptimeLabel(), inline: true },
             { name: 'Players', value: String(players.length || 0), inline: true }
